@@ -3,40 +3,31 @@ Copyright: Ankitects Pty Ltd and contributors
 License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 -->
 <script lang="ts">
-    import { tick } from "svelte";
-
     export let html = "";
     export let x: number = 0;
     export let y: number = 0;
     export let show = true;
 
-    let container: HTMLDivElement | null = null;
+    let width = 0;
 
     let adjustedX: number, adjustedY: number;
 
-    let shiftLeftAmount = 0;
-    $: onXChange(x);
-
-    async function onXChange(xPos: number) {
-        await tick();
-        shiftLeftAmount = container
-            ? Math.round(
-                  container.clientWidth * 1.2 * (xPos / document.body.clientWidth),
-              )
-            : 0;
-    }
-
     $: {
         // move tooltip away from edge as user approaches right side
+        const shiftLeftAmount = Math.round(
+            width * 1.2 * (x / document.body.clientWidth),
+        );
         adjustedX = x + 40 - shiftLeftAmount;
         adjustedY = y + 40;
     }
 </script>
 
 <div
-    bind:this={container}
+    bind:clientWidth={width}
     class="tooltip"
-    style="left: {adjustedX}px; top: {adjustedY}px; opacity: {show ? 1 : 0}"
+    style="left: clamp(0px, {adjustedX}px, calc(100% - {width}px)); top: {adjustedY}px; opacity: {show
+        ? 1
+        : 0}"
 >
     {@html html}
 </div>
@@ -44,7 +35,10 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 <style lang="scss">
     .tooltip {
         position: absolute;
-        white-space: nowrap;
+        box-sizing: border-box;
+        width: max-content;
+        max-width: 100%;
+        overflow-wrap: anywhere;
         padding: 15px;
         border-radius: 5px;
         font-family: inherit;
